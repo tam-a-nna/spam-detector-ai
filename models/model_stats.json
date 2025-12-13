@@ -1,0 +1,15 @@
+{
+  "accuracy": 0.9739910313901345,
+  "accuracy_percentage": "97.40%",
+  "total_messages": 5572,
+  "training_messages": 4457,
+  "testing_messages": 1115,
+  "ham_count": 4825,
+  "spam_count": 747,
+  "true_positives": 123,
+  "true_negatives": 963,
+  "false_positives": 3,
+  "false_negatives": 26,
+  "precision": 0.9761904761904762,
+  "recall": 0.825503355704698
+}
