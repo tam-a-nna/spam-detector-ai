@@ -169,10 +169,10 @@ with col1:
     
     test_cols = st.columns(4)
     examples = {
-        "💰 Prize": "You won $1000! Click to claim!",
-        "⚠️ Urgent": "URGENT: Verify account now!",
-        "📅 Normal": "Meeting tomorrow at 3 PM",
-        "💸 Payment": "hi, we have an meeting!!you need to pay 2 DOLLARs first"
+        " Prize": "You won $1000! Click to claim!",
+        " Urgent": "URGENT: Verify account now!",
+        " Normal": "Meeting tomorrow at 3 PM",
+        " Payment": "hi, we have an meeting!!you need to pay 2 DOLLARs first"
     }
     
     for i, (name, text) in enumerate(examples.items()):
@@ -182,11 +182,11 @@ with col1:
     
     if st.button("🔍 **Check for Spam**", type="primary", use_container_width=True, key="check_spam_btn"):
         if not model or not vectorizer:
-            st.error("❌ Please train the model first")
+            st.error(" Please train the model first")
         elif not message.strip():
             st.warning("⚠️ Enter a message")
         else:
-            with st.spinner("🤖 AI is analyzing..."):
+            with st.spinner("AI is analyzing..."):
                 # Enhanced preprocessing
                 enhanced_text = enhance_text_for_detection(message)
                 
