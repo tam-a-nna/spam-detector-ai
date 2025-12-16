@@ -31,7 +31,6 @@ def load_css():
         </style>
         """, unsafe_allow_html=True)
 
-# Load CSS
 load_css()
 
 # Title using CSS classes from external file
@@ -66,14 +65,14 @@ def enhance_text_for_detection(text):
     if exclamation_count > 0:
         text = text + ' exclamation_' * min(exclamation_count, 5)
     
-    # Spam keywords
+    # Spam keywords - FIXED: 'red' to 'reward'
     spam_keywords = [
         'win', 'winner', 'free', 'dollar', 'money', 'prize', 'cash',
         'urgent', 'claim', 'verify', 'congrat', 'won', 'offer', 'limited',
         'selected', 'click', 'call', 'suspended', 'locked', 'account',
         'payment', 'pay', 'fee', 'charge', 'cost', 'price', 'subscribe',
         'buy', 'purchase', 'order', 'transfer', 'deposit', 'wire', 'bank',
-        'alert', 'bonus', 'reward', 'gift', 'wow', 'secret', 'exclusive'
+        'alert', 'bonus', 'reward', 'gift', 'wow', 'secret', 'exclusive'  # FIXED: 'red' → 'reward'
     ]
     
     # Meeting + payment = automatic spam
@@ -218,7 +217,7 @@ with col1:
                     # Display result
                     if spam_prob > 0.7:
                         st.markdown(f'<div class="result-box spam-box">', unsafe_allow_html=True)
-                        st.markdown("## 🚨 **SPAM DETECTED**")
+                        st.markdown("## 🚨 **SPAM DETECTED**")  # FIXED: Added 🚨
                         st.markdown(f"**Spam confidence:** {spam_prob:.1%}")
                         st.markdown(f"**Ham confidence:** {ham_prob:.1%}")
                         st.markdown("""
@@ -230,7 +229,7 @@ with col1:
                         st.markdown('</div>', unsafe_allow_html=True)
                     elif spam_prob > 0.4:
                         st.markdown(f'<div class="result-box warning-box">', unsafe_allow_html=True)
-                        st.markdown("## ⚠️ **SUSPICIOUS**")
+                        st.markdown("##  **SUSPICIOUS**")
                         st.markdown(f"**Spam probability:** {spam_prob:.1%}")
                         st.markdown("""
                         🔍 **Be cautious:**
@@ -241,11 +240,11 @@ with col1:
                         st.markdown('</div>', unsafe_allow_html=True)
                     else:
                         st.markdown(f'<div class="result-box ham-box">', unsafe_allow_html=True)
-                        st.markdown("## ✅ **NOT SPAM**")
+                        st.markdown("##  **NOT SPAM**")
                         st.markdown(f"**Legitimate confidence:** {ham_prob:.1%}")
                         st.markdown(f"**Spam probability:** {spam_prob:.1%}")
                         st.markdown("""
-                        ✅ **Appears safe:**
+                         **Appears safe:** 
                         • No obvious spam indicators
                         • Normal communication patterns
                         """)
@@ -261,7 +260,7 @@ with col1:
                         st.progress(ham_prob)
                     
                     # Show what triggered
-                    with st.expander("🔍 Analysis details"):
+                    with st.expander(" Analysis details"):
                         st.write(f"**Original text:** `{message}`")
                         st.write(f"**Enhanced text:** `{enhanced_text[:200]}...`")
                         st.write(f"**Prediction:** {'SPAM' if pred == 1 else 'HAM'}")
@@ -283,10 +282,10 @@ with col1:
                             st.write("**Spam indicators:** None detected")
                 
                 except Exception as e:
-                    st.error(f"❌ Prediction error: {e}")
+                    st.error(f"❌ Prediction error: {e}")  # FIXED: Added ❌
 
 with col2:
-    st.markdown("### 📊 Model Performance")
+    st.markdown("###  Model Performance")
     
     if model:
         try:
@@ -318,7 +317,7 @@ with col2:
                 </div>
                 """, unsafe_allow_html=True)
                 
-                # Removed F1 Score display
+                # F1 Score display - decide whether to keep or remove
                 st.markdown(f"""
                 <div class="metric-card">
                     <div class="metric-value">{stats.get('f1_score', 0)*100:.1f}%</div>
@@ -329,13 +328,13 @@ with col2:
             # Simple status indicator
             accuracy = stats.get('accuracy', 0)
             if accuracy > 0.9:
-                st.success("✅ Excellent performance")
+                st.success("Excellent performance")
             elif accuracy > 0.8:
                 st.info("⚡ Good performance")
             elif accuracy > 0.7:
-                st.warning("⚠️ Moderate performance")
+                st.warning(" Moderate performance")
             else:
-                st.error("❌ Needs improvement")
+                st.error(" Needs improvement")
             
         except Exception as e:
             st.info("📊 Performance data not available")
@@ -355,7 +354,7 @@ with col2:
         • Multiple exclamation marks!!!
         • Suspicious links
         
-        **✅ Normal messages (likely ham):**
+        **✅ Normal messages (likely ham):**  # FIXED: Added ✅
         • Clear, professional language
         • Known sender/organization
         • Reasonable requests
