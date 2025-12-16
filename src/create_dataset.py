@@ -1,55 +1,39 @@
 import pandas as pd
-import os
 import urllib.request
 import zipfile
+import os
 
-def create_dataset():
-    print("==================================================")
-    print("DOWNLOADING SMS SPAM DATASET")
-    print("==================================================")
-    
-    url = "https://archive.ics.uci.edu/ml/machine-learning-databases/00228/smsspamcollection.zip"
-    zip_path = "smsspamcollection.zip"
+def download_dataset():
+    print("📥 Downloading SMS spam dataset...")
     
     try:
-        # Download the dataset
-        print("[1/4] Downloading dataset...")
-        urllib.request.urlretrieve(url, zip_path)
-        print("✅ Download completed")
+        # Download file
+        url = "https://archive.ics.uci.edu/ml/machine-learning-databases/00228/smsspamcollection.zip"
+        urllib.request.urlretrieve(url, "temp.zip")
         
-        # Extract the zip file
-        print("[2/4] Extracting files...")
-        with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+        # Extract
+        with zipfile.ZipFile("temp.zip", 'r') as zip_ref:
             zip_ref.extractall(".")
-        print("✅ Extraction completed")
         
-        # Read the dataset
-        print("[3/4] Reading dataset...")
+        # Load and save
         df = pd.read_csv('SMSSpamCollection', sep='\t', names=['label', 'message'], encoding='latin-1')
         
-        # Save as CSV
-        df.to_csv('spam.csv', index=False)
-        print(f"✅ Dataset saved as 'spam.csv'")
-        print(f"   Total messages: {len(df)}")
-        print(f"   Spam messages: {len(df[df['label']=='spam'])}")
-        print(f"   Ham messages: {len(df[df['label']=='ham'])}")
+        # Create data folder
+        os.makedirs('data', exist_ok=True)
+        df.to_csv('data/spam.csv', index=False)
         
         # Cleanup
-        print("[4/4] Cleaning up...")
-        if os.path.exists(zip_path):
-            os.remove(zip_path)
+        os.remove("temp.zip")
         if os.path.exists('SMSSpamCollection'):
             os.remove('SMSSpamCollection')
-        print("✅ Cleanup completed")
         
-        print("\n✅ Dataset ready! Now run: python train_model.py")
+        print(f"✅ Dataset saved: data/spam.csv")
+        print(f"   Messages: {len(df)}")
+        print(f"   Spam: {len(df[df['label']=='spam'])}")
+        print(f"   Ham: {len(df[df['label']=='ham'])}")
         
     except Exception as e:
         print(f"❌ Error: {e}")
-        if os.path.exists('spam.csv'):
-            print("✅ Using existing spam.csv file")
-        else:
-            print("❌ Please check your internet connection")
 
 if __name__ == "__main__":
-    create_dataset()
+    download_dataset()
