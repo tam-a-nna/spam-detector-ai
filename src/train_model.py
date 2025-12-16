@@ -1,94 +1,106 @@
-print("=" * 60)
-print("SPAM SMS DETECTOR - TRAINING STARTED")
-print("=" * 60)
-
-# Step 1: Import libraries
-print("\n[1/8] Loading required libraries...")
 import pandas as pd
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
-from sklearn.feature_extraction.text import CountVectorizer
-from sklearn.naive_bayes import MultinomialNB
-from sklearn.metrics import accuracy_score
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 import joblib
-print("✅ Libraries loaded")
+import os
+import json
+import re
 
-# Step 2: Load dataset
-print("\n[2/8] Loading dataset...")
-try:
-    # Try reading the dataset
-    df = pd.read_csv('spam.csv', encoding='latin-1')
-    print(f"✅ Dataset loaded: {len(df)} rows")
-    
-    # Show first few rows
-    print("\nFirst 3 rows of dataset:")
-    print(df.head(3))
-    
-except Exception as e:
-    print(f"❌ Error loading dataset: {e}")
-    print("\nPlease make sure 'spam.csv' is in the same folder")
-    exit()
-
-# Step 3: Clean and prepare data
-print("\n[3/8] Cleaning data...")
-# Keep only needed columns
-df = df[['v1', 'v2']]
-df.columns = ['label', 'message']
-
-# Remove duplicates
-initial_count = len(df)
-df = df.drop_duplicates()
-print(f"Removed {initial_count - len(df)} duplicate messages")
-
-# Convert labels
-df['label'] = df['label'].map({'ham': 0, 'spam': 1})
-print(f"✅ Cleaned dataset: {len(df)} messages")
-print(f"   - Ham (0): {len(df[df['label']==0])}")
-print(f"   - Spam (1): {len(df[df['label']==1])}")
-
-# Step 4: Prepare features
-print("\n[4/8] Preparing features...")
-X = df['message']  # Text messages
-y = df['label']    # Labels (0=ham, 1=spam)
-
-# Step 5: Split data
-print("\n[5/8] Splitting data (80% train, 20% test)...")
-X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_size=0.2, random_state=42, stratify=y
-)
-print(f"Training set: {len(X_train)} messages")
-print(f"Testing set: {len(X_test)} messages")
-
-# Step 6: Text to numbers
-print("\n[6/8] Converting text to numbers...")
-vectorizer = CountVectorizer(stop_words='english', max_features=3000)
-X_train_vec = vectorizer.fit_transform(X_train)
-X_test_vec = vectorizer.transform(X_test)
-print(f"Created {X_train_vec.shape[1]} features")
-
-# Step 7: Train model
-print("\n[7/8] Training model...")
-model = MultinomialNB()
-model.fit(X_train_vec, y_train)
-print("✅ Model trained successfully")
-
-# Step 8: Test and save
-print("\n[8/8] Testing model...")
-y_pred = model.predict(X_test_vec)
-accuracy = accuracy_score(y_test, y_pred)
-
-print("\n" + "=" * 60)
-print("📊 RESULTS:")
 print("=" * 60)
-print(f"Model Accuracy: {accuracy:.2%}")
-print(f"Correct predictions: {sum(y_pred == y_test)}/{len(y_test)}")
-
-# Save model
-joblib.dump(model, 'spam_model.pkl')
-joblib.dump(vectorizer, 'vectorizer.pkl')
-print("\n💾 Model saved: spam_model.pkl")
-print("💾 Vectorizer saved: vectorizer.pkl")
-
-print("\n" + "=" * 60)
-print("🎉 TRAINING COMPLETE!")
+print("SPAM SMS DETECTOR - MODEL TRAINING")
 print("=" * 60)
-print("\nNext command to run: streamlit run app.py")
+
+def preprocess_text(text):
+    """Clean text for training"""
+    text = str(text).lower()
+    text = re.sub(r'http\S+|www\S+', '', text)
+    text = re.sub(r'[^a-zA-Z\s]', '', text)
+    text = ' '.join(text.split())
+    return text
+
+def train_model():
+    # Check if dataset exists
+    print("[1/6] Checking dataset...")
+    if not os.path.exists('spam.csv'):
+        print("❌ Error: spam.csv not found!")
+        print("   Run: python create_dataset.py")
+        return False
+    
+    try:
+        # Load dataset
+        print("[2/6] Loading dataset...")
+        df = pd.read_csv('spam.csv')
+        print(f"   ✅ Loaded {len(df)} messages")
+        
+        # Preprocess
+        print("[3/6] Preprocessing text...")
+        df['message_clean'] = df['message'].apply(preprocess_text)
+        df['label_num'] = df['label'].map({'spam': 1, 'ham': 0})
+        
+        # Split data
+        X_train, X_test, y_train, y_test = train_test_split(
+            df['message_clean'], 
+            df['label_num'], 
+            test_size=0.2, 
+            random_state=42
+        )
+        
+        # Vectorize
+        print("[4/6] Creating features...")
+        vectorizer = TfidfVectorizer(max_features=5000)
+        X_train_vec = vectorizer.fit_transform(X_train)
+        X_test_vec = vectorizer.transform(X_test)
+        
+        # Train model
+        print("[5/6] Training model...")
+        model = LogisticRegression(max_iter=1000, random_state=42)
+        model.fit(X_train_vec, y_train)
+        
+        # Evaluate
+        print("[6/6] Evaluating model...")
+        y_pred = model.predict(X_test_vec)
+        
+        metrics = {
+            'accuracy': float(accuracy_score(y_test, y_pred)),
+            'precision': float(precision_score(y_test, y_pred)),
+            'recall': float(recall_score(y_test, y_pred)),
+            'f1_score': float(f1_score(y_test, y_pred)),
+            'total_samples': len(df),
+            'spam_samples': int(df['label_num'].sum()),
+            'ham_samples': int(len(df) - df['label_num'].sum())
+        }
+        
+        # Save model
+        os.makedirs('models', exist_ok=True)
+        joblib.dump(model, 'models/spam_model.pkl')
+        joblib.dump(vectorizer, 'models/vectorizer.pkl')
+        
+        with open('models/model_stats.json', 'w') as f:
+            json.dump(metrics, f, indent=2)
+        
+        # Print results
+        print("\n" + "=" * 60)
+        print("TRAINING COMPLETE!")
+        print("=" * 60)
+        print(f"📊 Model Performance:")
+        print(f"   Accuracy:  {metrics['accuracy']:.1%}")
+        print(f"   Precision: {metrics['precision']:.1%}")
+        print(f"   Recall:    {metrics['recall']:.1%}")
+        print(f"   F1-Score:  {metrics['f1_score']:.1%}")
+        print(f"\n📁 Files saved in 'models/' folder:")
+        print(f"   • spam_model.pkl (trained model)")
+        print(f"   • vectorizer.pkl (feature extractor)")
+        print(f"   • model_stats.json (performance metrics)")
+        print("\n✅ Now run: streamlit run app.py")
+        print("=" * 60)
+        
+        return True
+        
+    except Exception as e:
+        print(f"❌ Training failed: {e}")
+        return False
+
+if __name__ == "__main__":
+    train_model()
