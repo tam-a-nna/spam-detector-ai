@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🛡️ Spam Detector</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <header class="main-header">
+            <h1><i class="fas fa-shield-alt"></i> Spam Detector</h1>
+            <p class="sub-header">AI-powered detection of spam messages</p>
+        </header>
+
+        <main>
+            <section class="input-section">
+                <h2><i class="fas fa-envelope"></i> Check Your Message</h2>
+                <div class="input-container">
+                    <textarea id="messageInput" placeholder="Paste your message here to check if it's spam..." rows="8">your account has been suspended/locked due to suspicious activity. Click here to verify your details!</textarea>
+                    
+                    <!-- Quick Test Buttons -->
+                    <div class="quick-test">
+                        <h3><i class="fas fa-bolt"></i> Quick Test Examples</h3>
+                        <div class="button-grid">
+                            <button type="button" class="test-btn" onclick="setExample('Congratulations! You\\'ve won $1000! Claim now by clicking this link!')">
+                                <i class="fas fa-money-bill-wave"></i> Prize Scam
+                            </button>
+                            <button type="button" class="test-btn" onclick="setExample('WINNER!! You won a free iPhone! Call now to claim your prize!')">
+                                <i class="fas fa-trophy"></i> Winner
+                            </button>
+                            <button type="button" class="test-btn" onclick="setExample('Hey, don\\'t forget about our meeting tomorrow at 3 PM in the conference room.')">
+                                <i class="fas fa-calendar-alt"></i> Normal
+                            </button>
+                            <button type="button" class="test-btn" onclick="setExample('Your account has been suspended. Click here to verify your details!')">
+                                <i class="fas fa-exclamation-triangle"></i> Phishing
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <button onclick="checkSpam()" class="submit-btn">
+                        <i class="fas fa-search"></i> Check for Spam
+                    </button>
+                </div>
+            </section>
+
+            <!-- Results Section -->
+            <section id="resultsSection" class="results-section" style="display: none;">
+                <div id="resultBox" class="result-box">
+                    <h2 id="resultTitle">Result</h2>
+                    <p id="resultConfidence">Confidence: --%</p>
+                </div>
+                
+                <div class="probability-bars">
+                    <div class="probability">
+                        <label>Spam Probability</label>
+                        <div class="progress-bar">
+                            <div id="spamBar" class="progress-fill" style="width: 0%; background-color: #E11D48;"></div>
+                        </div>
+                        <span id="spamPercent">0%</span>
+                    </div>
+                    <div class="probability">
+                        <label>Legitimate Probability</label>
+                        <div class="progress-bar">
+                            <div id="hamBar" class="progress-fill" style="width: 0%; background-color: #16A34A;"></div>
+                        </div>
+                        <span id="hamPercent">0%</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Model Info Section -->
+            <section class="model-info">
+                <h2><i class="fas fa-chart-line"></i> Model Performance</h2>
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <div class="metric-value" id="accuracy">--%</div>
+                        <div class="metric-label">Accuracy</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value" id="precision">--%</div>
+                        <div class="metric-label">Precision</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value" id="recall">--%</div>
+                        <div class="metric-label">Recall</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value" id="f1score">--%</div>
+                        <div class="metric-label">F1-Score</div>
+                    </div>
+                </div>
+                <div class="dataset-info">
+                    <i class="fas fa-database"></i>
+                    <span id="datasetInfo">Loading dataset info...</span>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <p><i class="fas fa-shield-alt"></i> Spam Detector • Accurate • Secure</p>
+            <p class="copyright">© 2024 Spam Detector Team</p>
+        </footer>
+    </div>
+
+    <script>
+        // Set example message
+        function setExample(message) {
+            document.getElementById('messageInput').value = message;
+        }
+        
+        // Check spam function
+        async function checkSpam() {
+            const message = document.getElementById('messageInput').value.trim();
+            if (!message) {
+                alert('Please enter a message to check!');
+                return;
+            }
+            
+            const submitBtn = document.querySelector('.submit-btn');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Analyzing...';
+            submitBtn.disabled = true;
+            
+            try {
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ message: message })
+                });
+                
+                const result = await response.json();
+                
+                if (result.error) {
+                    alert(result.error);
+                    return;
+                }
+                
+                // Show results
+                document.getElementById('resultsSection').style.display = 'block';
+                
+                // Update result box
+                const resultBox = document.getElementById('resultBox');
+                const resultTitle = document.getElementById('resultTitle');
+                const resultConfidence = document.getElementById('resultConfidence');
+                
+                resultBox.className = 'result-box';
+                
+                if (result.is_spam) {
+                    resultBox.classList.add('spam');
+                    resultTitle.innerHTML = '<i class="fas fa-exclamation-triangle"></i> SPAM DETECTED';
+                } else {
+                    resultBox.classList.add('ham');
+                    resultTitle.innerHTML = '<i class="fas fa-check-circle"></i> NOT SPAM';
+                }
+                
+                const spamPercent = Math.round(result.spam_prob * 100);
+                resultConfidence.textContent = `Confidence: ${spamPercent}%`;
+                
+                // Update probability bars
+                updateProbabilityBars(result.spam_prob, result.ham_prob);
+                
+                // Scroll to results
+                document.getElementById('resultsSection').scrollIntoView({ 
+                    behavior: 'smooth' 
+                });
+                
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error checking message. Please try again.');
+            } finally {
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+            }
+        }
+        
+        // Update probability bars
+        function updateProbabilityBars(spamProb, hamProb) {
+            const spamPercent = Math.round(spamProb * 100);
+            const hamPercent = Math.round(hamProb * 100);
+            
+            document.getElementById('spamPercent').textContent = `${spamPercent}%`;
+            document.getElementById('hamPercent').textContent = `${hamPercent}%`;
+            
+            setTimeout(() => {
+                document.getElementById('spamBar').style.width = `${spamPercent}%`;
+                document.getElementById('hamBar').style.width = `${hamPercent}%`;
+            }, 100);
+        }
+        
+        // Load model metrics
+        async function loadModelMetrics() {
+            try {
+                const response = await fetch('/metrics');
+                const metrics = await response.json();
+                
+                document.getElementById('accuracy').textContent = `${Math.round(metrics.accuracy * 100)}%`;
+                document.getElementById('precision').textContent = `${Math.round(metrics.precision * 100)}%`;
+                document.getElementById('recall').textContent = `${Math.round(metrics.recall * 100)}%`;
+                document.getElementById('f1score').textContent = `${Math.round(metrics.f1_score * 100)}%`;
+                
+                document.getElementById('datasetInfo').textContent = 
+                    `Trained on ${metrics.total_samples} messages (${metrics.spam_samples} spam, ${metrics.ham_samples} legitimate)`;
+                    
+            } catch (error) {
+                console.error('Failed to load metrics:', error);
+                document.getElementById('datasetInfo').textContent = 'Model not trained yet';
+            }
+        }
+        
+        // Load metrics on page load
+        window.onload = loadModelMetrics;
+    </script>
+</body>
+</html>
