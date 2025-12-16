@@ -125,12 +125,12 @@ with st.sidebar:
     else:
         st.success("✅ **Model is ready**", icon="✅")
         
+        # Show quick stats
         try:
             with open('models/model_stats.json') as f:
                 stats = json.load(f)
             
             st.metric("Accuracy", f"{stats.get('accuracy', 0)*100:.1f}%")
-            st.caption(f"Trained on {stats.get('train_samples', 0):,} samples")
         except:
             pass
     
@@ -163,6 +163,7 @@ with col1:
         label_visibility="collapsed"
     )
     
+    # Update session state
     st.session_state.message = message
     
     st.markdown("#### 🧪 Test Examples")
@@ -199,6 +200,7 @@ with col1:
                     spam_prob = float(prob[1])
                     ham_prob = float(prob[0])
                     
+                    # Extra boost for obvious spam patterns
                     spam_boosters = [
                         ('meeting' in message.lower() and any(word in message.lower() for word in ['pay', 'dollar', 'money', 'fee']), 0.4),
                         ('!!!' in message or '!!' in message, 0.15),
@@ -316,6 +318,7 @@ with col2:
                 </div>
                 """, unsafe_allow_html=True)
                 
+                # Removed F1 Score display
                 st.markdown(f"""
                 <div class="metric-card">
                     <div class="metric-value">{stats.get('f1_score', 0)*100:.1f}%</div>
@@ -323,12 +326,16 @@ with col2:
                 </div>
                 """, unsafe_allow_html=True)
             
-            # Confusion matrix if available
-            if 'confusion_matrix' in stats:
-                cm = stats['confusion_matrix']
-                st.caption(f"**Confusion Matrix:** TP={cm[1][1]} | FP={cm[0][1]} | FN={cm[1][0]} | TN={cm[0][0]}")
-            
-            st.caption(f"Trained on {stats.get('train_samples', 0):,} messages")
+            # Simple status indicator
+            accuracy = stats.get('accuracy', 0)
+            if accuracy > 0.9:
+                st.success("✅ Excellent performance")
+            elif accuracy > 0.8:
+                st.info("⚡ Good performance")
+            elif accuracy > 0.7:
+                st.warning("⚠️ Moderate performance")
+            else:
+                st.error("❌ Needs improvement")
             
         except Exception as e:
             st.info("📊 Performance data not available")
