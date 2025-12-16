@@ -125,7 +125,6 @@ with st.sidebar:
     else:
         st.success("✅ **Model is ready**", icon="✅")
         
-        # Show quick stats
         try:
             with open('models/model_stats.json') as f:
                 stats = json.load(f)
@@ -164,7 +163,6 @@ with col1:
         label_visibility="collapsed"
     )
     
-    # Update session state
     st.session_state.message = message
     
     st.markdown("#### 🧪 Test Examples")
@@ -201,7 +199,6 @@ with col1:
                     spam_prob = float(prob[1])
                     ham_prob = float(prob[0])
                     
-                    # Extra boost for obvious spam patterns
                     spam_boosters = [
                         ('meeting' in message.lower() and any(word in message.lower() for word in ['pay', 'dollar', 'money', 'fee']), 0.4),
                         ('!!!' in message or '!!' in message, 0.15),
