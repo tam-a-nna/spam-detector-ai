@@ -12,129 +12,28 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Beautiful CSS
-st.markdown("""
-<style>
-    /* Main title */
-    .main-title {
-        font-size: 2.8rem;
-        font-weight: 800;
-        background: linear-gradient(90deg, #1E40AF, #3B82F6);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        text-align: center;
-        margin-bottom: 0.5rem;
-        padding: 1rem;
-    }
-    
-    /* Subtitle */
-    .subtitle {
-        text-align: center;
-        color: #6B7280;
-        font-size: 1.1rem;
-        margin-bottom: 2rem;
-    }
-    
-    /* Card styling */
-    .metric-card {
-        background: white;
-        padding: 1.2rem;
-        border-radius: 12px;
-        border: 1px solid #E5E7EB;
-        text-align: center;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-        transition: transform 0.2s;
-        margin-bottom: 0.5rem;
-    }
-    
-    .metric-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    }
-    
-    .metric-value {
-        font-size: 1.8rem;
-        font-weight: 700;
-        color: #1E40AF;
-        margin-bottom: 0.2rem;
-    }
-    
-    .metric-label {
-        font-size: 0.85rem;
-        color: #6B7280;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-    
-    /* Text area */
-    .stTextArea textarea {
-        border: 2px solid #E5E7EB;
-        border-radius: 12px;
-        font-size: 1rem;
-        padding: 1rem;
-    }
-    
-    .stTextArea textarea:focus {
-        border-color: #3B82F6;
-        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-    }
-    
-    /* Buttons */
-    .stButton > button {
-        border-radius: 10px;
-        font-weight: 600;
-        transition: all 0.2s;
-    }
-    
-    .test-button {
-        background: #F3F4F6 !important;
-        color: #374151 !important;
-        border: 1px solid #D1D5DB !important;
-    }
-    
-    .test-button:hover {
-        background: #E5E7EB !important;
-        transform: translateY(-1px);
-    }
-    
-    /* Result boxes */
-    .result-box {
-        padding: 2rem;
-        border-radius: 15px;
-        margin: 1.5rem 0;
-        border-left: 6px solid;
-        animation: fadeIn 0.5s;
-    }
-    
-    @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(10px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-    
-    .spam-box {
-        background: linear-gradient(135deg, #FEE2E2 0%, #FECACA 100%);
-        border-left-color: #DC2626;
-    }
-    
-    .ham-box {
-        background: linear-gradient(135deg, #DCFCE7 0%, #BBF7D0 100%);
-        border-left-color: #16A34A;
-    }
-    
-    .warning-box {
-        background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%);
-        border-left-color: #D97706;
-    }
-    
-    /* Progress bar */
-    .stProgress > div > div > div {
-        background: linear-gradient(90deg, #3B82F6, #1E40AF);
-        border-radius: 4px;
-    }
-</style>
-""", unsafe_allow_html=True)
+# Load external CSS
+def load_css():
+    try:
+        with open('static/style.css', 'r') as f:
+            css = f.read()
+            st.markdown(f'<style>{css}</style>', unsafe_allow_html=True)
+    except:
+        st.markdown("""
+        <style>
+            .main-title {
+                font-size: 2.5rem;
+                font-weight: 700;
+                color: #1E40AF;
+                text-align: center;
+            }
+        </style>
+        """, unsafe_allow_html=True)
 
-# Title
+# Load CSS
+load_css()
+
+# Title using CSS classes from external file
 st.markdown('<h1 class="main-title">🛡️ Spam Detector</h1>', unsafe_allow_html=True)
 st.markdown('<p class="subtitle">AI-powered detection of spam messages with high accuracy</p>', unsafe_allow_html=True)
 
@@ -157,7 +56,7 @@ def clean_text(text):
 # Load model
 model, vectorizer = load_model()
 
-# Sidebar - Simple setup
+# Sidebar
 with st.sidebar:
     st.markdown("### ⚙️ Setup")
     
@@ -191,18 +90,16 @@ with st.sidebar:
 col1, col2 = st.columns([2, 1])
 
 with col1:
-    # Input section
     st.markdown("### 📝 Check Your Message")
     
     message = st.text_area(
-        "",
+        "Enter your message",
         height=140,
         value="your account has been suspended. Click here to verify details!",
         placeholder="Paste your message here...",
         label_visibility="collapsed"
     )
     
-    # Test buttons - smaller and cleaner
     st.markdown("#### 🧪 Test Examples")
     
     test_cols = st.columns(4)
@@ -217,7 +114,6 @@ with col1:
         if test_cols[i].button(name, use_container_width=True):
             st.session_state.message = text
     
-    # Check button
     if st.button("🔍 **Check for Spam**", type="primary", use_container_width=True):
         if not model:
             st.error("Please train the model first")
@@ -232,11 +128,9 @@ with col1:
                 
                 spam_prob = float(prob[1])
                 
-                # Keyword boost
                 if any(word in message.lower() for word in ['suspended', 'locked', 'verify', 'click']):
                     spam_prob = min(0.95, spam_prob + 0.2)
                 
-                # Display result
                 st.markdown("---")
                 
                 if spam_prob > 0.65:
@@ -255,12 +149,10 @@ with col1:
                     st.markdown(f"**Confidence:** {(1-spam_prob):.1%}")
                     st.markdown('</div>', unsafe_allow_html=True)
                 
-                # Progress bar
                 st.progress(spam_prob)
                 st.caption(f"Spam score: {spam_prob:.1%}")
 
 with col2:
-    # Model performance - smaller font
     st.markdown("### 📊 Model Performance")
     
     if model:
@@ -268,7 +160,6 @@ with col2:
             with open('models/model_stats.json') as f:
                 stats = json.load(f)
             
-            # Create metric cards with smaller font
             col_a, col_b = st.columns(2)
             
             with col_a:
@@ -301,13 +192,11 @@ with col2:
                 </div>
                 """, unsafe_allow_html=True)
             
-            # Small dataset info
             st.caption(f"Trained on {stats.get('total_samples', 0):,} messages")
             
         except:
             st.info("Performance data not available")
     
-    # Tips section
     st.markdown("---")
     st.markdown("### 💡 Quick Tips")
     
@@ -330,13 +219,13 @@ with col2:
 # Footer
 st.markdown("---")
 st.markdown(
-    '<div style="text-align: center; color: #6B7280; font-size: 0.9rem; padding: 1rem;">'
+    '<div class="footer">'
     '🛡️ Spam Detector • Powered by AI • Stay safe online'
     '</div>',
     unsafe_allow_html=True
 )
 
-
+# Handle message updates
 if 'message' in st.session_state:
     message = st.session_state.message
     del st.session_state.message
