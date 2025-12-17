@@ -165,7 +165,7 @@ with col1:
     # Update session state
     st.session_state.message = message
     
-    st.markdown("#### 🧪 Test Examples")
+    st.markdown("####  Test Examples")
     
     test_cols = st.columns(4)
     examples = {
