@@ -2,7 +2,7 @@
 
 
 ## 📸 Application Interface
-![Spam Detector Screenshot](app-screenshot.png)
+![Spam Detector Screenshot](images/app-screenshot.png)
 *Real-time spam classification with confidence scoring*
 
 ## 📊 Key Metrics
